@@ -1,5 +1,5 @@
 # BoomRoom
-# v1.01
+# v1.02
 # 
 # for Hack Green 'Secret Nuclear Bunker'
 #
@@ -39,9 +39,16 @@ def setup():
     global fps, clock
     global rectTop, rectBottom
     global imgTest, imgRun, imgTestStop, imgRunStop, imgLogo
-    global isActive
+    global isActive, activeStartTime
     global sound, soundChannel
-  
+
+    global eventList
+    eventList = list(())
+    global idxEventList
+    idxEventList=0
+    global hasEvents
+    hasEvents=len(eventList)>0
+    
     print("Starting up")
     pygame.init()
     pygame.mixer.init()
@@ -70,8 +77,9 @@ def setup():
     fps = 30
     clock = pygame.time.Clock()
 
-    # need to have something initialised in 'sound'?
+    # TODO: need to have something initialised in 'sound'?
     sound = pygame.mixer.Sound('media/Boom Room 1 LR.wav')
+
 
 def shutdown():
     print("shutting down")
@@ -81,22 +89,49 @@ def shutdown():
     pygame.quit()
     sys.exit(0)
 
+def testOne():
+    print("testOne hit")
+    
+def testTwo():
+    print("testTwo hit")
+    
+def testThree():
+    print("testThree hit")
+    
+def testFour():
+    print("testFour hit")
+
 def doReset():
+    print("reset")
     global sound, soundChannel
-    global isActive
+    global isActive, activeStartTime
+    global hasEvents, idxEventList, eventList
+    idxEventList=0
+    eventList.clear()
+    hasEvents=len(eventList)>0  
     pygame.event.clear()
     sound.stop()
     # setup the buttons again
     setButton(rectTop, clrGreen, imgTest)
     setButton(rectBottom, clrRed, imgRun)
     pygame.display.flip()
-    pygame.event.clear()
     isActive=False
+    activeStartTime = pygame.time.get_ticks()
+    pygame.event.clear()
+
   
 def doRun():
     print("running")
     global sound, soundChannel
-    global isActive
+    global isActive, activeStartTime
+    global hasEvents, idxEventList, eventList
+    eventList.clear()
+    eventList.append(tuple((1500,'testOne')))
+    eventList.append(tuple((3500,'testTwo')))
+    eventList.append(tuple((6500,'testThree')))
+    eventList.append(tuple((12500,'testFour')))
+    idxEventList=0
+    hasEvents=len(eventList)>0  
     sound.stop()
     setButton(rectTop, clrBlack, imgLogo)
     setButton(rectBottom, clrRed, imgRunStop)
@@ -105,13 +140,22 @@ def doRun():
     pygame.event.clear()
     soundChannel = sound.play()
     isActive=True
+    activeStartTime = pygame.time.get_ticks()
     pygame.event.clear()
   
 
 def doTest():
     print("testing")
     global sound, soundChannel
-    global isActive
+    global isActive, activeStartTime
+    global hasEvents, idxEventList, eventList
+    eventList.clear()
+    eventList.append(tuple((1500,'testOne')))
+    eventList.append(tuple((3500,'testTwo')))
+    eventList.append(tuple((6500,'testThree')))
+    idxEventList=0
+    hasEvents=len(eventList)>0  
+    
     sound.stop()
     setButton(rectTop, clrGreen, imgTestStop)
     setButton(rectBottom, clrBlack, imgLogo)
@@ -120,6 +164,7 @@ def doTest():
     pygame.event.clear()
     soundChannel=sound.play()
     isActive=True
+    activeStartTime = pygame.time.get_ticks()
     pygame.event.clear()
 
 def topButtonPressed():
@@ -145,12 +190,37 @@ def setButton(buttonRect, color, img):
 # Main Program
 
 setup()
+
+# make a list of possible function calls the eventList could contain
+possFuncs = globals().copy()
+possFuncs.update(locals())
+
 doReset()
 
-  
 running=True
-
 while running:
+    # is there anything to do right now?
+    if isActive and hasEvents:
+        elapsed = pygame.time.get_ticks()
+
+        # when is the next event?
+        eventTime = eventList[idxEventList][0]
+        
+        # is this event happening now (or has passed?)
+        if (activeStartTime + eventTime <= elapsed):
+
+            # find the eventList function call in our instance
+            method=possFuncs.get(eventList[idxEventList][1])
+            idxEventList += 1 
+            if not method:
+                print("bad name")
+            else:
+                method()
+            if idxEventList>=len(eventList):
+                print("no more events in list")
+                hasEvents = False
+                idxEventList = 0
+                
     for event in pygame.event.get():
         if event.type == QUIT:
             running=False
@@ -167,7 +237,7 @@ while running:
                 break
     
         if event.type == pygame.KEYUP:
-            if event.key == pygame.K_s:
+            if (event.key == pygame.K_s) or (event.key == pygame.K_SPACE):
                 doReset()
                 break
 
