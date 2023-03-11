@@ -1,5 +1,5 @@
 # BoomRoom
-# v1.02
+# v1.04
 # 
 # for Hack Green 'Secret Nuclear Bunker'
 #
@@ -20,6 +20,7 @@
 import sys
 import pygame
 from pygame.locals import *
+from inspect import getmembers, isfunction
 
 try:
     # checks if you have access to RPi.GPIO, which is available inside RPi
@@ -28,6 +29,8 @@ except:
     # In case of exception, you are executing your script outside of RPi, so import Mock.GPIO
     import Mock.GPIO as GPIO
 
+import BRRunMode as RunMode
+import BRTestMode as TestMode
 
 def centreImgOut(screen, img, xbound, ybound, xofs, yofs):
     ofs=img.get_rect()
@@ -48,6 +51,8 @@ def setup():
     idxEventList=0
     global hasEvents
     hasEvents=len(eventList)>0
+
+    global modeFuncs
     
     print("Starting up")
     pygame.init()
@@ -89,83 +94,86 @@ def shutdown():
     pygame.quit()
     sys.exit(0)
 
-def testOne():
-    print("testOne hit")
+def boomOne():
+    print("boomOne hit")
     
-def testTwo():
-    print("testTwo hit")
+def boomTwo():
+    print("boomTwo hit")
     
-def testThree():
-    print("testThree hit")
+def boomThree():
+    print("boomThree hit")
     
-def testFour():
-    print("testFour hit")
+def boomFour():
+    print("boomFour hit")
 
 def doReset():
     print("reset")
     global sound, soundChannel
     global isActive, activeStartTime
-    global hasEvents, idxEventList, eventList
-    idxEventList=0
-    eventList.clear()
-    hasEvents=len(eventList)>0  
-    pygame.event.clear()
+    global eventList
     sound.stop()
+    eventList.clear()
+    resetEventList()
+    #modeFuncs.clear()
+    
     # setup the buttons again
     setButton(rectTop, clrGreen, imgTest)
     setButton(rectBottom, clrRed, imgRun)
     pygame.display.flip()
+
     isActive=False
     activeStartTime = pygame.time.get_ticks()
     pygame.event.clear()
 
-  
+
 def doRun():
     print("running")
     global sound, soundChannel
     global isActive, activeStartTime
-    global hasEvents, idxEventList, eventList
-    eventList.clear()
-    eventList.append(tuple((1500,'testOne')))
-    eventList.append(tuple((3500,'testTwo')))
-    eventList.append(tuple((6500,'testThree')))
-    eventList.append(tuple((12500,'testFour')))
-    idxEventList=0
-    hasEvents=len(eventList)>0  
+    global eventList
     sound.stop()
+    RunMode.ModeInit(eventList)
+    resetEventList()
+    global modeFuncs
+    modeFuncs = RunMode.ModeFuncs()
+
     setButton(rectTop, clrBlack, imgLogo)
     setButton(rectBottom, clrRed, imgRunStop)
     pygame.display.flip()
-    sound = pygame.mixer.Sound('media/Boom Room 1 LR.wav')
-    pygame.event.clear()
+
+    sound = pygame.mixer.Sound(RunMode.GetSoundFile())
     soundChannel = sound.play()
     isActive=True
     activeStartTime = pygame.time.get_ticks()
     pygame.event.clear()
-  
+
 
 def doTest():
     print("testing")
     global sound, soundChannel
     global isActive, activeStartTime
-    global hasEvents, idxEventList, eventList
-    eventList.clear()
-    eventList.append(tuple((1500,'testOne')))
-    eventList.append(tuple((3500,'testTwo')))
-    eventList.append(tuple((6500,'testThree')))
-    idxEventList=0
-    hasEvents=len(eventList)>0  
-    
+    global eventList
     sound.stop()
+    TestMode.ModeInit(eventList)
+    resetEventList()
+    global modeFuncs
+    modeFuncs = TestMode.ModeFuncs()
+    
     setButton(rectTop, clrGreen, imgTestStop)
     setButton(rectBottom, clrBlack, imgLogo)
     pygame.display.flip()
-    sound = pygame.mixer.Sound('media/Bunker 6.0 test 1.wav')
-    pygame.event.clear()
+
+    sound = pygame.mixer.Sound(TestMode.GetSoundFile())
     soundChannel=sound.play()
     isActive=True
     activeStartTime = pygame.time.get_ticks()
     pygame.event.clear()
+    
+def resetEventList():  
+    global hasEvents, idxEventList, eventList
+    idxEventList=0
+    hasEvents=len(eventList)>0  
+
 
 def topButtonPressed():
     global isActive
@@ -185,15 +193,17 @@ def setButton(buttonRect, color, img):
     pygame.draw.rect(screen, color, buttonRect)
     centreImgOut(screen, img, buttonRect.width, buttonRect.height, buttonRect.left, buttonRect.top)
 
-
+def Convert(lst):
+    res_dct = {lst[i]: lst[i + 1] for i in range(0, len(lst), 2)}
+    return res_dct
 
 # Main Program
 
 setup()
 
 # make a list of possible function calls the eventList could contain
-possFuncs = globals().copy()
-possFuncs.update(locals())
+boomFuncs = globals().copy()
+boomFuncs.update(locals())
 
 doReset()
 
@@ -210,12 +220,19 @@ while running:
         if (activeStartTime + eventTime <= elapsed):
 
             # find the eventList function call in our instance
-            method=possFuncs.get(eventList[idxEventList][1])
+            methName = eventList[idxEventList][1]
+            method=boomFuncs.get(methName)
+            # print(method)
             idxEventList += 1 
             if not method:
-                print("bad name")
+                method = modeFuncs.get(methName)
+                if not method:
+                    print("bad name - " + methName)
+                else:
+                    method()
             else:
                 method()
+                
             if idxEventList>=len(eventList):
                 print("no more events in list")
                 hasEvents = False
@@ -253,10 +270,11 @@ while running:
         
     # end for event loop
 
-    # are we still actively doing something?
-    if running and isActive:
-        # have we come to the end of the active sound?
+    # are we still actively doing something, but no more events in eventList?
+    if running and isActive and not hasEvents:
+        # have we come to the end of any active sound too?
         if soundChannel.get_busy() == False:
+            # reset, whatever we were doing is now over
             doReset()
       
     # finish off housekeeping etc      
