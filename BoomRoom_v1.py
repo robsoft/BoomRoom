@@ -1,12 +1,33 @@
+# BoomRoom
+# v1.00
+# 
+# for Hack Green 'Secret Nuclear Bunker'
+#
+# initial dev version
+#
+# designed for a 320x480 resistive-touch screen
+#
+# media in a subfolder 'media'
+# when running,
+#  key 'T' will start a test (if not currently active)
+#  key 'R' will start a run (if not currently active)
+#  key 'S' will stop whatever is currently active
+#  any other key will end the program (for now)
+#  likewise, buttons can be pressed on screen with the mouse/stylus etc
+#
+
+
 import sys
 import pygame
 from pygame.locals import *
+
 try:
     # checks if you have access to RPi.GPIO, which is available inside RPi
     import RPi.GPIO as GPIO
 except:
     # In case of exception, you are executing your script outside of RPi, so import Mock.GPIO
     import Mock.GPIO as GPIO
+
 
 def centreImgOut(screen, img, xbound, ybound, xofs, yofs):
   ofs=img.get_rect()
@@ -112,6 +133,8 @@ def bottomButtonPressed():
 def setButton(buttonRect, color, img):
   pygame.draw.rect(screen, color, buttonRect)
   centreImgOut(screen, img, buttonRect.width, buttonRect.height, buttonRect.left, buttonRect.top)
+
+
 
 # Main Program
 
