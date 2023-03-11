@@ -1,5 +1,5 @@
 # BoomRoom
-# v1.04
+# v1.05
 # 
 # for Hack Green 'Secret Nuclear Bunker'
 #
@@ -20,7 +20,7 @@
 import sys
 import pygame
 from pygame.locals import *
-from inspect import getmembers, isfunction
+import socket
 
 try:
     # checks if you have access to RPi.GPIO, which is available inside RPi
@@ -32,6 +32,14 @@ except:
 import BRRunMode as RunMode
 import BRTestMode as TestMode
 
+def get_ip_address():
+   ip_address = 'n/a';
+   s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+   s.connect(("8.8.8.8",80))
+   ip_address = s.getsockname()[0]
+   s.close()
+   return ip_address
+
 def centreImgOut(screen, img, xbound, ybound, xofs, yofs):
     ofs=img.get_rect()
     screen.blit(img, ( xofs + ((xbound-ofs.width)/2), yofs + ((ybound-ofs.height)/2)) )
@@ -40,8 +48,8 @@ def setup():
     global clrWhite, clrGrey, clrWhite, clrBlack, clrRed, clrAmber, clrGreen
     global screen, font
     global fps, clock
-    global rectTop, rectBottom
-    global imgTest, imgRun, imgTestStop, imgRunStop, imgLogo
+    global rectTop, rectBottom, rectIP
+    global imgTest, imgRun, imgTestStop, imgRunStop, imgLogo, imgIP
     global isActive, activeStartTime
     global sound, soundChannel
 
@@ -67,17 +75,23 @@ def setup():
     clrRed = (255,0,0)
     clrGreen = (0,255,0)
 
-    font = pygame.font.SysFont(None, 132)
     lsize = [320, 480]
     screen = pygame.display.set_mode(lsize)
-    lsizeButton = (300,220)
-    rectTop = pygame.Rect((10,10),lsizeButton)
-    rectBottom = pygame.Rect((10,250),lsizeButton)
+
+    font = pygame.font.SysFont(None, 32)
+    imgIP = font.render(get_ip_address().replace('.',' . '), True, clrWhite)
+
+    font = pygame.font.SysFont(None, 132)
     imgTest = font.render('Test', True, clrBlack)
     imgTestStop = font.render('Stop', True, clrBlack)
     imgRun = font.render('Run', True, clrWhite)
     imgRunStop = font.render('Stop', True, clrWhite)
-    imgLogo = pygame.image.load('media/Bunker_220x220.png')
+    imgLogo = pygame.image.load('media/Bunker_200x200.png')
+
+    lsizeButton = (300,200)
+    rectTop = pygame.Rect((10,10),lsizeButton)
+    rectBottom = pygame.Rect((10,230),lsizeButton)
+    rectIP = pygame.Rect((10,450),(300,30))
 
     fps = 30
     clock = pygame.time.Clock()
@@ -119,6 +133,7 @@ def doReset():
     # setup the buttons again
     setButton(rectTop, clrGreen, imgTest)
     setButton(rectBottom, clrRed, imgRun)
+    setButton(rectIP, clrBlack, imgIP)
     pygame.display.flip()
 
     isActive=False
@@ -200,6 +215,8 @@ def Convert(lst):
 # Main Program
 
 setup()
+
+print(get_ip_address())
 
 # make a list of possible function calls the eventList could contain
 boomFuncs = globals().copy()
