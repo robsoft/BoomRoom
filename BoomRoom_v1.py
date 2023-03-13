@@ -68,7 +68,7 @@ def setup():
     pygame.display.init()
     pygame.font.init()
     pygame.mouse.set_visible(True)
-    pygame.display.set_caption("BoomRoom")
+    pygame.display.set_caption("BoomRoom v1")
     clrWhite = (255,255,255)
     clrGrey =  (169,169,169)
     clrBlack = (0,0,0)
@@ -76,7 +76,7 @@ def setup():
     clrGreen = (0,255,0)
 
     lsize = [320, 480]
-    screen = pygame.display.set_mode(lsize)
+    screen = pygame.display.set_mode(lsize, pygame.FULLSCREEN | pygame.NOFRAME)
 
     font = pygame.font.SysFont(None, 32)
     imgIP = font.render(get_ip_address().replace('.',' . '), True, clrWhite)
