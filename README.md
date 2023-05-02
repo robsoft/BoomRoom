@@ -21,4 +21,9 @@ We have used PyGame to do most of the heavy lifting around image loading, sound 
 Our longer-term intention is to make this more robust and flexible, and encourage other smaller museums and installations to use and help extend the programs. 
 
 <img src="/media/boomroom-default.png" width="240px"/><img src="/media/boomroom-test.png" width="240px"/><img src="/media/boomroom-run.png" width="240px"/>  
+
+
+
+http://www.lcdwiki.com/3.5inch_RPi_Display 
+
   
