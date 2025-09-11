@@ -1,5 +1,7 @@
 # BoomRoom
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+![Project Status: Alpha](https://img.shields.io/badge/Status-Alpha-red.svg)
+![Pygame](https://img.shields.io/badge/Library-Pygame-green.svg)
 
 <table>
   <tr>
